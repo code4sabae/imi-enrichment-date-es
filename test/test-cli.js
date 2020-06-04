@@ -1,24 +1,28 @@
-const expect = require('chai').expect;
-const spawn = require('child_process').spawn;
-const fs = require("fs");
+import { describe, it, expect, before, after, makeDirname } from "https://taisukef.github.io/denolib/nodelikeassert.mjs"
+const __dirname = makeDirname(import.meta.url)
+// const spawn = require('child_process').spawn;
 const spec = __dirname + "/../spec";
 
-function cli(options, stdin) {
-  let res = "";
-  const cmd = ["bin/cli.js"].concat(options || []);
-  return new Promise(resolve => {
-    const child = spawn("node", cmd);
-    child.stdout.setEncoding('utf-8');
-    child.stdout.on('data', (data) => {
-      res += data;
-    });
-    child.on('close', (code) => {
-      resolve(res);
-    });
-    if (stdin) {
-      child.stdin.setEncoding('utf-8');
-      child.stdin.write(stdin);
-      child.stdin.end();
+const cli = function (options, stdin) {
+  const reader = stdin || Deno.stdin;
+  console.log('stdin', stdin);
+  const cmd = ["../bin/cli.mjs"].concat(options || []);
+  return new Promise(async (resolve, reject) => {
+    const args = ["deno", "run", "-A", ...cmd]
+    try {
+      const process = await Deno.run({ cmd: args, stdout: "piped", stdin: "piped" });
+      console.log(args);
+      //await Deno.copy(reader, process.stdout);
+      console.log(process)
+      await process.stdin.write(new TextEncoder().encode(stdin));
+      const res = await Deno.readAll(process.stdout);
+      console.log(res);
+      const txt = new TextDecoder().decode(res);
+      console.log(txt);
+      resolve(txt);
+    } catch (e) {
+      console.log(e);
+      reject(e);
     }
   });
 }
@@ -38,25 +42,20 @@ describe('imi-enrichment-date#cli', () => {
   const tempfile = `tmp.${(new Date()).getTime()}.json`;
 
   before((done) => {
-    fs.writeFileSync(tempfile, JSON.stringify(input), "UTF-8");
+    Deno.writeTextFileSync(tempfile, JSON.stringify(input));
     done();
   });
 
   after(() => {
-    fs.unlinkSync(tempfile);
+    Deno.unlinkSync(tempfile);
   });
 
+  /*
   describe('options', () => {
 
-    it("-h", (done) => {
-      cli(["-h"]).then(res => {
-        try {
-          expect(res).to.have.string("imi-enrichment-date");
-          done();
-        } catch (e) {
-          done(e);
-        }
-      });
+    it("-h", async () => {
+      const res = cli(["-h"]);
+      expect(res).to.have.string("imi-enrichment-date");
     });
 
     it("--help", (done) => {
@@ -146,22 +145,21 @@ describe('imi-enrichment-date#cli', () => {
       });
     });
   });
-
+  */
   describe("spec", function() {
-    fs.readdirSync(spec).filter(file => file.match(/json$/)).forEach(file => {
-      describe(file, function() {
-        const json = JSON.parse(fs.readFileSync(`${spec}/${file}`, "UTF-8"));
+    const ifiles = Deno.readDirSync(spec);
+    const files = [];
+    for (const f of ifiles) { files.push(f); }
+    files.filter(file => file.name.match(/json$/)).forEach(file => {
+      describe(file.name, function() {
+        const json = JSON.parse(Deno.readTextFileSync(`${spec}/${file.name}`));
         json.forEach(a => {
-          it(a.name, done => {
+          it(a.name, async () => {
             const promise = typeof a.input === 'string' ? cli(["-s", a.input]) : cli(null, JSON.stringify(a.input));
-            promise.then(res => {
-              try {
-                expect(JSON.parse(res)).deep.equal(a.output);
-                done();
-              } catch (e) {
-                done(e);
-              }
-            });
+            const res = await promise;
+            console.log(a.input);
+            console.log(JSON.stringify(JSON.parse(res)) === JSON.stringify(a.output));
+            expect(JSON.parse(res)).deep.equal(a.output);
           });
         });
       });

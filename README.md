@@ -1,6 +1,25 @@
-# imi-enrichment-date
+# imi-enrichment-date ES
 
-入力となる JSON-LD に含まれる `表記 をもつ 日付型` に対して `標準型日付` を付与します。
+入力となる JSON-LD に含まれる `表記 をもつ 日付型` に対して `標準型日付` を付与するESモジュールです。
+
+[![esmodules](https://taisukef.github.com/denolib/esmodulesbadge.svg)](https://developer.mozilla.org/ja/docs/Web/JavaScript/Guide/Modules)
+[![deno](https://taisukef.github.com/denolib/denobadge.svg)](https://deno.land/)
+
+# 利用者向け情報
+
+## API
+
+```
+<script type="module">
+import IMIEnrichmentDate from "https://code4sabae.github.io/imi-enrichment-date-es/IMIEnrichmentDate.mjs";
+console.log(IMIEnrichmentDate("R1-1-1"));
+</script>
+```
+
+この `IMIEnrichmentDate` に String あるいは JSON を渡すことで、変換結果を取得できます。
+
+- 入力 (input) : 変換対象となる JSON または日付文字列
+- 出力 : 変換結果の JSON-LD オブジェクト ※ 変換は同期で行うため Promise でないことに注意
 
 **input.json**
 
@@ -38,63 +57,31 @@
 }
 ```
 
-# 利用者向け情報
+# 開発者向け情報
 
-以下の手順はパッケージアーカイブ `imi-enrichment-date-1.0.0.tgz` を用いて実行します。
+## 環境構築
 
-## インストール
-
-以下の手順でインストールします。
+以下の手順で環境を構築します。
 
 ```
-$ npm install imi-enrichment-date-1.0.0.tgz
-```
-
-## コマンドラインインターフェイス
-
-`imi-enrichment-date-1.0.0.tgz` にはコマンドラインインターフェイスが同梱されており、
-通常はインストールすると `imi-enrichment-date` コマンドが使用できるようになります。
-
-コマンドラインインターフェイスのファイルの実体は `bin/cli.js` です。
-
-```
-$ npm install imi-enrichment-date-1.0.0.tgz
-
-# ヘルプの表示
-$ imi-enrichment-date -h
-
-# JSON ファイルの変換
-$ imi-enrichment-date input.json > output.json
-
-# 標準入力からの変換
-$ cat input.json | imi-enrichment-date > output.json
-
-# 文字列からの変換
-$ imi-enrichment-date -s R2-1-1 > output.json
-
-```
-
-または `npx` を使って以下のようにインストールせずに実行することも可能です。
-
-```
-$ npx imi-enrichment-date-1.0.0.tgz -s R2-1-1
+$ git clone https://github.com/code4sabae/imi-enrichment-date-es.git
 ```
 
 ## Web API
 
-`imi-enrichment-date-1.0.0.tgz` には Web API を提供するサーバプログラムが同梱されています。
+Web API を提供するサーバプログラムが同梱されています。
 
 ### サーバの起動方法
 
-`bin/server.js` がサーバの実体です。
-以下のように `bin/server.js` を実行することで起動できます。
+`bin/server.mjs` がサーバの実体です。
+以下のように `bin/server.mjs` を実行することで起動できます。
 
 ```
-$ npm install imi-enrichment-date-1.0.0.tgz
-$ node node_modules/imi-enrichment-date/bin/server.js
-Usage: node server.js [port number]
+$ bin
+$ deno run -A server.mjs
+Usage: deno run -A server.mjs [port number]
 
-$ node node_modules/imi-enrichment-date/bin/server.js 8080
+$ deno run -A server.mjs 8080
 imi-enrichment-date-server is running on port 8080
 ```
 
@@ -130,35 +117,26 @@ $ curl -X POST -H 'Content-Type: text/plain' -d 'R2-1-1' localhost:8080
 - `Content-Type: application/json` ヘッダが設定されているが POST Body が JSON としてパースできない場合は `400 Bad Request` エラーが返されます
 - `Content-Type: application/json` ヘッダが設定されていない場合は、POST Body を日付文字列として扱い、日付文字列を日付型に整形・正規化した結果を返します
 
-## API (Node.js)
+## コマンドラインインターフェイス
 
-モジュール `imi-enrichment-date` は以下のような API の関数を提供します。
-
-```
-module.exports = function(input) {..}
-```
-
-- 入力 (input) : 変換対象となる JSON または日付文字列
-- 出力 : 変換結果の JSON-LD オブジェクト ※ 変換は同期で行うため Promise でないことに注意
+コマンドラインインターフェイスのファイルの実体は `bin/cli.mjs` です。  
+(一部動作しません！！)
 
 ```
-const convert = require('imi-enrichment-date');
-console.log(convert("令和元年1月1日"));
-```
+$ cd bin
 
-# 開発者向け情報
+# ヘルプの表示
+$ deno run cli.mjs -h
 
-以下の手順はソースコードアーカイブ `imi-enrichment-date-1.0.0.src.tgz` を用いて実行します。
+# JSON ファイルの変換
+$ deno run cli.mjs input.json > output.json
 
-## 環境構築
+# 標準入力からの変換
+$ cat input.json | deno run cli.mjs > output.json
 
-以下の手順で環境を構築します。
+# 文字列からの変換
+$ deno run cli.mjs -s R2-1-1 > output.json
 
-```
-$ mkdir imi-enrichment-date
-$ cd imi-enrichment-date
-$ tar xvzf /tmp/imi-enrichment-date-1.0.0.src.tgz
-$ npm install
 ```
 
 ## テスト
@@ -166,29 +144,21 @@ $ npm install
 以下の手順でテストを実行します
 
 ```
-$ cd imi-enrichment-date
-$ npm test
+$ deno test
 ```
 
+## 依存関係
 
-## ブラウザビルド(参考情報)
+なし
 
-以下の手順を実行するとブラウザで動作する Javascript `dist/imi-enrichment-date.js` が生成されます。
+## 出典
 
-```
-$ cd imi-enrichment-date
-$ npm run browser
-$ ls dist
-imi-enrichment-date.js
-```
+本ライブラリは IMI 情報共有基盤 コンポーネントツール https://info.gbiz.go.jp/tools/imi_tools/ の「[IMI 日付型正規化パッケージ一式](https://github.com/IMI-Tool-Project/imi-enrichment-date)」をESモジュール対応したものです。
 
-以下のように HTML で読み込むと、グローバルスコープに `IMIEnrichmentDate` 関数が登録されます。
+## 関連記事
 
-```
-<script src="imi-enrichment-date.js"></script>
-<script>
-console.log(IMIEnrichmentDate("R1-1-1"));
-</script>
-```
+Deno対応ESモジュール対応、IMIコンポーネントツールx4とDenoバッジ  
+https://fukuno.jig.jp/2866  
 
-この `IMIEnrichmentDate` に String あるいは JSON を渡すことで、変換結果を取得できます。
+日本政府発のJavaScriptライブラリを勝手にweb標準化するプロジェクト、全角-半角統一コンポーネントのESモジュール/Deno対応版公開  
+https://fukuno.jig.jp/2865  
